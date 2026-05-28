@@ -15,6 +15,7 @@ tavily-python>=0.5.0
 
 # Video processing
 yt-dlp>=2024.9.1
+youtube-transcript-api>=0.6.3
 imageio-ffmpeg>=0.5.1
 opencv-python-headless>=4.10.0.84
 

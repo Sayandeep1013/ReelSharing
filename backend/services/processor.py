@@ -11,7 +11,7 @@ import shutil
 
 from database import supabase
 from config import settings
-from services import downloader, extractor, transcriber, vision, embedder, summarizer, researcher
+from services import downloader, extractor, transcriber, vision, embedder, summarizer, researcher, youtube
 
 logger = logging.getLogger(__name__)
 
@@ -153,10 +153,74 @@ async def run_pipeline(note_id: str, url: str = None, local_video_path: str = No
     try:
         # ── 1. Download / prepare ─────────────────────────────────────────
         t = _step(note_id, "Download / prepare")
-        if url:
+        is_youtube = bool(url and downloader.get_platform_from_url(url) == "youtube")
+
+        if is_youtube:
+            # YouTube path: fetch metadata + transcript via API, skip video download
+            _status(note_id, "downloading", "Fetching YouTube metadata...")
+            video_id = youtube.extract_video_id(url)
+            metadata = await youtube.get_metadata(url, video_id)
+            _step_done(note_id, "YouTube metadata", t)
+
+            _update_note(
+                note_id,
+                title=metadata.get("title", "")[:255],
+                thumbnail_url=metadata.get("thumbnail", ""),
+                metadata=metadata,
+            )
+
+            t = _step(note_id, "YouTube transcript")
+            _status(note_id, "transcribing", "Fetching YouTube captions...")
+            transcript_segments = youtube.get_transcript(video_id)
+            _step_done(note_id, "YouTube transcript", t)
+            logger.info("[%s] transcript: %d segments", note_id[:8], len(transcript_segments))
+
+            uploaded_frames = []
+
+        elif url:
+            # Non-YouTube URL: full yt-dlp download + extract + transcribe + vision
             _status(note_id, "downloading", "Fetching video from URL...")
             video_path, metadata = await downloader.download_from_url(url, work_dir)
+            _step_done(note_id, "Download", t)
+            logger.info("[%s] Video path: %s  |  size: %.1f MB",
+                        note_id[:8], video_path, os.path.getsize(video_path) / 1_048_576)
+
+            _update_note(
+                note_id,
+                title=metadata.get("title", "")[:255],
+                thumbnail_url=metadata.get("thumbnail", ""),
+                metadata=metadata,
+            )
+
+            t = _step(note_id, "Extract audio + frames")
+            _status(note_id, "extracting", "Extracting audio and key frames...")
+            audio_path = await extractor.extract_audio(video_path, work_dir)
+            frames = await extractor.extract_frames(video_path, work_dir, max_frames=settings.max_key_frames)
+            _step_done(note_id, "Extract", t)
+            logger.info("[%s] audio: %s  |  frames: %d", note_id[:8], audio_path, len(frames))
+
+            t = _step(note_id, "Whisper transcription")
+            _status(note_id, "transcribing", "Transcribing audio...")
+            transcript_segments = await transcriber.transcribe(audio_path)
+            _step_done(note_id, "Transcription", t)
+            logger.info("[%s] transcript: %d segments", note_id[:8], len(transcript_segments))
+
+            t = _step(note_id, f"Vision analysis ({len(frames)} frames)")
+            _status(note_id, "analyzing", f"Analyzing {len(frames)} key frames with AI vision...")
+            analyzed_frames = await vision.analyze_frames(frames)
+            _step_done(note_id, "Vision analysis", t)
+
+            t = _step(note_id, "Frame upload to Supabase Storage")
+            _status(note_id, "analyzing", "Uploading key frames to storage...")
+            uploaded_frames = []
+            for f in analyzed_frames:
+                uf = await _upload_frame_to_storage(note_id, f)
+                uploaded_frames.append(uf)
+            await _save_frames_to_db(note_id, uploaded_frames)
+            _step_done(note_id, "Frame upload", t)
+
         else:
+            # Direct file upload
             _status(note_id, "downloading", "Preparing uploaded file...")
             video_path = local_video_path
             metadata = {
@@ -168,51 +232,43 @@ async def run_pipeline(note_id: str, url: str = None, local_video_path: str = No
                 "tags": [],
                 "categories": [],
             }
-        _step_done(note_id, "Download", t)
+            _step_done(note_id, "Upload prepare", t)
+            logger.info("[%s] Video path: %s  |  size: %.1f MB",
+                        note_id[:8], video_path, os.path.getsize(video_path) / 1_048_576)
 
-        logger.info("[%s] Video path: %s  |  size: %.1f MB",
-                    note_id[:8], video_path,
-                    os.path.getsize(video_path) / 1_048_576)
+            _update_note(
+                note_id,
+                title=metadata.get("title", "")[:255],
+                thumbnail_url=metadata.get("thumbnail", ""),
+                metadata=metadata,
+            )
 
-        _update_note(
-            note_id,
-            title=metadata.get("title", "")[:255],
-            thumbnail_url=metadata.get("thumbnail", ""),
-            metadata=metadata,
-        )
+            t = _step(note_id, "Extract audio + frames")
+            _status(note_id, "extracting", "Extracting audio and key frames...")
+            audio_path = await extractor.extract_audio(video_path, work_dir)
+            frames = await extractor.extract_frames(video_path, work_dir, max_frames=settings.max_key_frames)
+            _step_done(note_id, "Extract", t)
+            logger.info("[%s] audio: %s  |  frames: %d", note_id[:8], audio_path, len(frames))
 
-        # ── 2. Extract audio + frames ─────────────────────────────────────
-        t = _step(note_id, "Extract audio + frames")
-        _status(note_id, "extracting", "Extracting audio and key frames...")
-        audio_path = await extractor.extract_audio(video_path, work_dir)
-        frames = await extractor.extract_frames(
-            video_path, work_dir, max_frames=settings.max_key_frames
-        )
-        _step_done(note_id, "Extract", t)
-        logger.info("[%s] audio: %s  |  frames: %d", note_id[:8], audio_path, len(frames))
+            t = _step(note_id, "Whisper transcription")
+            _status(note_id, "transcribing", "Transcribing audio...")
+            transcript_segments = await transcriber.transcribe(audio_path)
+            _step_done(note_id, "Transcription", t)
+            logger.info("[%s] transcript: %d segments", note_id[:8], len(transcript_segments))
 
-        # ── 3. Transcribe ─────────────────────────────────────────────────
-        t = _step(note_id, "Whisper transcription")
-        _status(note_id, "transcribing", "Transcribing audio...")
-        transcript_segments = await transcriber.transcribe(audio_path)
-        _step_done(note_id, "Transcription", t)
-        logger.info("[%s] transcript: %d segments", note_id[:8], len(transcript_segments))
+            t = _step(note_id, f"Vision analysis ({len(frames)} frames)")
+            _status(note_id, "analyzing", f"Analyzing {len(frames)} key frames with AI vision...")
+            analyzed_frames = await vision.analyze_frames(frames)
+            _step_done(note_id, "Vision analysis", t)
 
-        # ── 4. Vision analysis ────────────────────────────────────────────
-        t = _step(note_id, f"Vision analysis ({len(frames)} frames)")
-        _status(note_id, "analyzing", f"Analyzing {len(frames)} key frames with AI vision...")
-        analyzed_frames = await vision.analyze_frames(frames)
-        _step_done(note_id, "Vision analysis", t)
-
-        # ── 5. Upload frames to Storage ───────────────────────────────────
-        t = _step(note_id, "Frame upload to Supabase Storage")
-        _status(note_id, "analyzing", "Uploading key frames to storage...")
-        uploaded_frames = []
-        for f in analyzed_frames:
-            uf = await _upload_frame_to_storage(note_id, f)
-            uploaded_frames.append(uf)
-        await _save_frames_to_db(note_id, uploaded_frames)
-        _step_done(note_id, "Frame upload", t)
+            t = _step(note_id, "Frame upload to Supabase Storage")
+            _status(note_id, "analyzing", "Uploading key frames to storage...")
+            uploaded_frames = []
+            for f in analyzed_frames:
+                uf = await _upload_frame_to_storage(note_id, f)
+                uploaded_frames.append(uf)
+            await _save_frames_to_db(note_id, uploaded_frames)
+            _step_done(note_id, "Frame upload", t)
 
         # ── 6. Embeddings ─────────────────────────────────────────────────
         t = _step(note_id, "Jina embeddings (dual pipeline)")

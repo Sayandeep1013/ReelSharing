@@ -1,0 +1,53 @@
+# ── Secrets ──────────────────────────────────────────────────
+backend/.env
+frontend/.env.local
+**/.env.local
+**/.env
+
+# ── Python ───────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.venv/
+venv/
+env/
+
+# ── Node ─────────────────────────────────────────────────────
+node_modules/
+.next/
+.turbo/
+out/
+dist/
+
+# ── OS ───────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── IDE ──────────────────────────────────────────────────────
+.vscode/settings.json
+.idea/
+
+# ── Claude Code / AI harness files ───────────────────────────
+.claude/
+CLAUDE.md
+CLAUDE.local.md
+AGENTS.md
+**/AGENTS.md
+**/.claude/
+
+# ── Uploads / temp video files ───────────────────────────────
+backend/temp/
+backend/uploads/
+*.mp4
+*.mov
+*.webm
+*.avi
+*.mp3

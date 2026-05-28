@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+  <title id="title">Base ingestion architecture</title>
+  <desc id="desc">Audio and video ingestion pipeline. YouTube URL or file upload enters yt-dlp and ffmpeg. Audio goes through Whisper, segments, MiniLM text embeddings, and ChromaDB. Video goes through OpenCV, SigLIP2 visual embeddings, and ChromaDB.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#13c8d8"/>
+    </marker>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+    <style>
+      .bg { fill: #07111f; }
+      .title { fill: #f4f7fb; font: 700 54px Consolas, "Courier New", monospace; letter-spacing: 1px; }
+      .label { fill: #e8f2ff; font: 700 19px Arial, sans-serif; }
+      .small { fill: #8ea3bc; font: 13px Arial, sans-serif; }
+      .tiny { fill: #7e91aa; font: 12px Arial, sans-serif; letter-spacing: 2px; }
+      .box { fill: #111d2e; stroke: #13c8d8; stroke-width: 3; rx: 8; filter: url(#shadow); }
+      .box-muted { fill: #182335; stroke: #2d3d55; stroke-width: 2; rx: 8; filter: url(#shadow); }
+      .arrow { stroke: #13c8d8; stroke-width: 3.5; fill: none; marker-end: url(#arrow); }
+      .caption { fill: #9aa8ba; font: 18px Arial, sans-serif; }
+    </style>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="1280" height="720"/>
+  <text class="title" x="44" y="70">Ingestion pipeline</text>
+
+  <text class="tiny" x="475" y="168">AUDIO PATH</text>
+  <text class="tiny" x="475" y="487">VIDEO PATH</text>
+
+  <rect class="box-muted" x="30" y="290" width="135" height="76"/>
+  <text class="label" x="62" y="322">YouTube URL</text>
+  <text class="small" x="68" y="346">or file upload</text>
+
+  <rect class="box" x="235" y="276" width="145" height="102"/>
+  <text class="label" x="285" y="312">yt-dlp</text>
+  <text class="small" x="279" y="338">download</text>
+  <text class="label" x="278" y="361">ffmpeg</text>
+
+  <rect class="box" x="455" y="181" width="150" height="82"/>
+  <text class="label" x="495" y="216">Whisper</text>
+  <text class="small" x="484" y="241">speech to text</text>
+
+  <rect class="box-muted" x="670" y="181" width="150" height="82"/>
+  <text class="label" x="706" y="216">Segments</text>
+  <text class="small" x="699" y="241">timestamped text</text>
+
+  <rect class="box" x="915" y="181" width="170" height="82"/>
+  <text class="label" x="946" y="216">MiniLM-L12-v2</text>
+  <text class="small" x="955" y="241">text embeddings</text>
+
+  <rect class="box" x="1082" y="330" width="160" height="100"/>
+  <text class="label" x="1125" y="365">ChromaDB</text>
+  <text class="small" x="1128" y="390">text collection</text>
+  <text class="small" x="1122" y="414">visual collection</text>
+
+  <rect class="box" x="452" y="500" width="160" height="82"/>
+  <text class="label" x="504" y="535">OpenCV</text>
+  <text class="small" x="482" y="560">frame extraction</text>
+
+  <rect class="box" x="680" y="500" width="170" height="82"/>
+  <text class="label" x="735" y="535">SigLIP2</text>
+  <text class="small" x="720" y="560">visual embeddings</text>
+
+  <path class="arrow" d="M165 328 L225 328"/>
+  <path class="arrow" d="M380 302 C410 260, 420 235, 445 224"/>
+  <path class="arrow" d="M605 222 L660 222"/>
+  <path class="arrow" d="M820 222 L905 222"/>
+  <path class="arrow" d="M1085 225 C1135 255, 1150 285, 1158 320"/>
+  <path class="arrow" d="M380 355 C410 405, 420 485, 442 530"/>
+  <path class="arrow" d="M612 541 L670 541"/>
+  <path class="arrow" d="M850 541 C940 515, 1020 460, 1072 405"/>
+
+  <text class="caption" x="65" y="650">Parallel paths: audio goes through Whisper for transcript embeddings, while video frames go through SigLIP2 for visual embeddings.</text>
+  <text class="caption" x="65" y="678">Both land in ChromaDB so retrieval can use text and visual evidence together.</text>
+</svg>

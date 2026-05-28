@@ -31,8 +31,8 @@ Produce a JSON object with EXACTLY these keys:
 {{
   "title": "clean, descriptive title (improve on original if needed)",
   "category": "one of: Education | Cooking | Fitness | Tech/Coding | Finance | Travel | Entertainment | Health | Design | Business | Other",
-  "summary": "2-4 sentence summary of what this video teaches or shows",
-  "key_points": ["5-7 key takeaways or facts from the video"],
+  "summary": "2-4 sentence summary of what this video shows, depicts, or communicates",
+  "key_points": ["5-7 key observations, moments, or facts from the video"],
   "important_moments": [
     {{"timestamp": "MM:SS", "description": "what happens", "reason": "why this moment matters"}}
   ],
@@ -41,8 +41,9 @@ Produce a JSON object with EXACTLY these keys:
   "suggested_tags": ["8-12 specific, relevant tags (lowercase, no #)"]
 }}
 
-Be specific, not generic. Extract actual facts, steps, names, quantities, techniques from the content.
-If the transcript is empty, rely on frame descriptions. If both are sparse, note that."""
+Be specific, not generic. Describe what actually happens — people, places, actions, objects, emotions, atmosphere.
+If the transcript is empty, rely on frame descriptions to infer what the video shows.
+If both are sparse, describe what little is available rather than saying there is no content."""
 
 
 def _format_transcript(segments: list[dict]) -> str:

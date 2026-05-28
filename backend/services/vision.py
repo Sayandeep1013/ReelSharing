@@ -11,10 +11,11 @@ logger = logging.getLogger(__name__)
 _client = Groq(api_key=settings.groq_vision_api_key)
 
 _FRAME_PROMPT = (
-    "You are analyzing a frame from a video. Describe what you see concisely and specifically. "
-    "Focus on: any text or captions on screen, diagrams, charts, code, ingredients, steps, "
-    "products, techniques, gestures, or any visually important information. "
-    "If it is just a talking head with no notable visual info, say so briefly. "
+    "You are analyzing a frame from a video. Describe everything visible: "
+    "the setting and location, people and what they are doing, their expressions and body language, "
+    "clothing and notable features, objects and items present, any text or captions on screen, "
+    "the lighting and atmosphere, and any actions or interactions happening. "
+    "Be specific and concrete — name what you actually see, not what you expect to see. "
     "Keep your response under 150 words."
 )
 

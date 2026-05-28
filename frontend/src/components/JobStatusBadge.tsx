@@ -5,67 +5,57 @@ import { Loader2, CheckCircle, XCircle, Clock } from "lucide-react";
 
 const STATUS_CONFIG: Record<
   NoteStatus,
-  { label: string; color: string; icon: React.ReactNode; pulse: boolean }
+  { label: string; style: string; icon: React.ReactNode }
 > = {
   pending: {
     label: "Queued",
-    color: "text-slate-400 bg-slate-400/10 border-slate-400/20",
+    style: "border-[#1C1C1C] text-[#6B6560] bg-[#E8E4DC]",
     icon: <Clock className="h-3 w-3" />,
-    pulse: false,
   },
   downloading: {
     label: "Downloading",
-    color: "text-blue-400 bg-blue-400/10 border-blue-400/20",
+    style: "border-[#E85234] text-[#E85234] bg-[#E85234]/10",
     icon: <Loader2 className="h-3 w-3 animate-spin" />,
-    pulse: true,
   },
   extracting: {
     label: "Extracting",
-    color: "text-blue-400 bg-blue-400/10 border-blue-400/20",
+    style: "border-[#E85234] text-[#E85234] bg-[#E85234]/10",
     icon: <Loader2 className="h-3 w-3 animate-spin" />,
-    pulse: true,
   },
   transcribing: {
     label: "Transcribing",
-    color: "text-violet-400 bg-violet-400/10 border-violet-400/20",
+    style: "border-[#E85234] text-[#E85234] bg-[#E85234]/10",
     icon: <Loader2 className="h-3 w-3 animate-spin" />,
-    pulse: true,
   },
   analyzing: {
     label: "Analyzing",
-    color: "text-amber-400 bg-amber-400/10 border-amber-400/20",
+    style: "border-[#E85234] text-[#E85234] bg-[#E85234]/10",
     icon: <Loader2 className="h-3 w-3 animate-spin" />,
-    pulse: true,
   },
   embedding: {
     label: "Indexing",
-    color: "text-amber-400 bg-amber-400/10 border-amber-400/20",
+    style: "border-[#E85234] text-[#E85234] bg-[#E85234]/10",
     icon: <Loader2 className="h-3 w-3 animate-spin" />,
-    pulse: true,
   },
   researching: {
     label: "Researching",
-    color: "text-amber-400 bg-amber-400/10 border-amber-400/20",
+    style: "border-[#E85234] text-[#E85234] bg-[#E85234]/10",
     icon: <Loader2 className="h-3 w-3 animate-spin" />,
-    pulse: true,
   },
   summarizing: {
     label: "Summarizing",
-    color: "text-cyan-400 bg-cyan-400/10 border-cyan-400/20",
+    style: "border-[#E85234] text-[#E85234] bg-[#E85234]/10",
     icon: <Loader2 className="h-3 w-3 animate-spin" />,
-    pulse: true,
   },
   done: {
     label: "Ready",
-    color: "text-emerald-400 bg-emerald-400/10 border-emerald-400/20",
+    style: "border-[#1C1C1C] text-[#F0EDE6] bg-[#1C1C1C]",
     icon: <CheckCircle className="h-3 w-3" />,
-    pulse: false,
   },
   failed: {
     label: "Failed",
-    color: "text-red-400 bg-red-400/10 border-red-400/20",
+    style: "border-red-600 text-red-600 bg-red-50",
     icon: <XCircle className="h-3 w-3" />,
-    pulse: false,
   },
 };
 
@@ -76,17 +66,16 @@ interface Props {
 
 export default function JobStatusBadge({ status, message }: Props) {
   const config = STATUS_CONFIG[status] ?? STATUS_CONFIG.pending;
+  const isActive = !["done", "failed", "pending"].includes(status);
 
   return (
-    <div className="flex items-center gap-1.5">
-      <span
-        className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium border ${config.color}`}
-      >
+    <div className="flex items-center gap-2">
+      <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 border-2 text-[10px] font-black uppercase tracking-widest ${config.style}`}>
         {config.icon}
         {config.label}
       </span>
-      {message && config.pulse && (
-        <span className="text-xs text-slate-500 truncate max-w-[180px]">{message}</span>
+      {message && isActive && (
+        <span className="text-[11px] text-[#6B6560] truncate max-w-[200px]">{message}</span>
       )}
     </div>
   );

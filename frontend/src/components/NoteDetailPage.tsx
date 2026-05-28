@@ -4,16 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { User } from "@supabase/supabase-js";
 import { toast } from "sonner";
-import {
-  ArrowLeft,
-  Brain,
-  ExternalLink,
-  ChevronDown,
-  ChevronUp,
-  Loader2,
-  Trash2,
-  RefreshCw,
-} from "lucide-react";
+import { ArrowLeft, Brain, ExternalLink, ChevronDown, ChevronUp, Loader2, Trash2, RefreshCw } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { fetchNote, deleteNote, updateCategory } from "@/lib/api";
 import { Note } from "@/types";
@@ -28,30 +19,24 @@ const CATEGORIES = [
   "Travel", "Entertainment", "Health", "Design", "Business", "Other",
 ];
 
-function Section({
-  title,
-  children,
-  defaultOpen = true,
-}: {
+function Section({ title, children, defaultOpen = true }: {
   title: string;
   children: React.ReactNode;
   defaultOpen?: boolean;
 }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="border border-slate-700/50 rounded-xl overflow-hidden">
+    <div className="border-2 border-[#1C1C1C]">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between px-5 py-3.5 bg-slate-800/50 hover:bg-slate-800 transition text-left"
+        className="w-full flex items-center justify-between px-5 py-3.5 bg-[#E0DCD4] hover:bg-[#D8D3CA] transition-colors text-left border-b-2 border-[#1C1C1C]"
       >
-        <span className="font-semibold text-sm">{title}</span>
-        {open ? (
-          <ChevronUp className="h-4 w-4 text-slate-500" />
-        ) : (
-          <ChevronDown className="h-4 w-4 text-slate-500" />
-        )}
+        <span className="font-black text-[11px] uppercase tracking-widest text-[#1C1C1C]">{title}</span>
+        {open
+          ? <ChevronUp className="h-4 w-4 text-[#6B6560]" />
+          : <ChevronDown className="h-4 w-4 text-[#6B6560]" />}
       </button>
-      {open && <div className="px-5 py-4">{children}</div>}
+      {open && <div className="px-5 py-4 bg-[#F0EDE6]">{children}</div>}
     </div>
   );
 }
@@ -87,29 +72,19 @@ export default function NoteDetailPage({ noteId, user }: Props) {
     }
   }, [token, noteId]);
 
-  useEffect(() => {
-    if (token) loadNote();
-  }, [loadNote, token]);
+  useEffect(() => { if (token) loadNote(); }, [loadNote, token]);
 
-  // Realtime status updates
   useEffect(() => {
     if (!token) return;
     const channel = supabase
       .channel(`note_${noteId}`)
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "notes", filter: `id=eq.${noteId}` },
-        (payload) => {
-          const updated = payload.new as Note;
-          if (updated.status === "done") {
-            // Reload full note with frames and tags when done
-            loadNote();
-            toast.success("Processing complete!");
-          } else {
-            setNote((prev) => (prev ? { ...prev, ...updated } : null));
-          }
-        }
-      )
+      .on("postgres_changes", {
+        event: "UPDATE", schema: "public", table: "notes", filter: `id=eq.${noteId}`,
+      }, (payload) => {
+        const updated = payload.new as Note;
+        if (updated.status === "done") { loadNote(); toast.success("Processing complete!"); }
+        else setNote((prev) => (prev ? { ...prev, ...updated } : null));
+      })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [token, noteId, loadNote]);
@@ -133,25 +108,32 @@ export default function NoteDetailPage({ noteId, user }: Props) {
       await updateCategory(token, noteId, category);
       setNote((prev) => (prev ? { ...prev, category } : null));
       toast.success("Category updated");
-    } catch {
-      toast.error("Failed to update category");
-    }
+    } catch { toast.error("Failed to update category"); }
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 text-cyan-400 animate-spin" />
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ backgroundColor: "#F0EDE6" }}
+      >
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-2 border-[#E85234] border-t-transparent animate-spin" />
+          <p className="text-[11px] font-black uppercase tracking-widest text-[#6B6560]">Loading...</p>
+        </div>
       </div>
     );
   }
 
   if (!note) {
     return (
-      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-white gap-4">
-        <p className="text-slate-400">Note not found.</p>
-        <Link href="/dashboard" className="text-cyan-400 hover:underline text-sm">
-          Back to dashboard
+      <div
+        className="min-h-screen flex flex-col items-center justify-center gap-4"
+        style={{ backgroundColor: "#F0EDE6" }}
+      >
+        <p className="text-[#6B6560] font-bold uppercase tracking-wider text-sm">Note not found.</p>
+        <Link href="/dashboard" className="text-[11px] font-black uppercase tracking-widest text-[#E85234] border-b-2 border-[#E85234]">
+          Back to Dashboard
         </Link>
       </div>
     );
@@ -161,25 +143,33 @@ export default function NoteDetailPage({ noteId, user }: Props) {
   const frames = (note.note_frames ?? []).sort((a, b) => a.timestamp_seconds - b.timestamp_seconds);
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white">
+    <div
+      className="min-h-screen text-[#1C1C1C]"
+      style={{
+        backgroundColor: "#F0EDE6",
+        backgroundImage:
+          "linear-gradient(rgba(28,28,28,0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(28,28,28,0.045) 1px, transparent 1px)",
+        backgroundSize: "48px 48px",
+      }}
+    >
       {/* Header */}
-      <header className="sticky top-0 z-30 bg-slate-900/80 backdrop-blur border-b border-slate-800">
+      <header className="sticky top-0 z-30 border-b-2 border-[#1C1C1C]" style={{ backgroundColor: "#F0EDE6" }}>
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <Link
               href="/dashboard"
-              className="flex items-center gap-1.5 text-slate-400 hover:text-white transition text-sm"
+              className="flex items-center gap-1.5 text-[#6B6560] hover:text-[#1C1C1C] transition text-[11px] font-black uppercase tracking-widest"
             >
               <ArrowLeft className="h-4 w-4" />
               <span className="hidden sm:inline">Dashboard</span>
             </Link>
-            <div className="h-4 w-px bg-slate-700" />
-            <Brain className="h-4 w-4 text-cyan-400" />
+            <div className="h-4 w-px bg-[#1C1C1C]/20" />
+            <Brain className="h-4 w-4 text-[#E85234]" />
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <button
               onClick={loadNote}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+              className="p-2 text-[#6B6560] hover:text-[#1C1C1C] border-2 border-transparent hover:border-[#1C1C1C] transition"
               title="Refresh"
             >
               <RefreshCw className="h-4 w-4" />
@@ -187,7 +177,7 @@ export default function NoteDetailPage({ noteId, user }: Props) {
             <button
               onClick={handleDelete}
               disabled={deleting}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-slate-800 transition disabled:opacity-50"
+              className="p-2 text-[#6B6560] hover:text-red-600 border-2 border-transparent hover:border-red-600 transition disabled:opacity-50"
               title="Delete note"
             >
               <Trash2 className="h-4 w-4" />
@@ -196,13 +186,13 @@ export default function NoteDetailPage({ noteId, user }: Props) {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-5">
-        {/* Title + meta */}
-        <div className="space-y-2">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-4">
+        {/* Title block */}
+        <div className="border-2 border-[#1C1C1C] bg-[#E8E4DC] p-6 space-y-3">
           <div className="flex items-center gap-3 flex-wrap">
             <JobStatusBadge status={note.status} message={note.status_message} />
             {note.platform && (
-              <span className="text-xs text-slate-500 uppercase tracking-wider">
+              <span className="text-[10px] font-black uppercase tracking-widest text-[#8A8580]">
                 {note.platform}
               </span>
             )}
@@ -211,61 +201,52 @@ export default function NoteDetailPage({ noteId, user }: Props) {
                 href={note.original_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1 text-xs text-cyan-400 hover:text-cyan-300 transition"
+                className="flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-[#E85234] border-b border-[#E85234]"
               >
-                Original video <ExternalLink className="h-3 w-3" />
+                Original Video <ExternalLink className="h-3 w-3" />
               </a>
             )}
           </div>
 
-          <h1 className="text-2xl sm:text-3xl font-bold leading-tight">{note.title}</h1>
+          <h1 className="text-2xl sm:text-3xl font-black leading-tight uppercase tracking-tight">
+            {note.title}
+          </h1>
 
-          {/* Category picker */}
           <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-500">Category:</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-[#8A8580]">Category:</span>
             <select
               value={note.category ?? ""}
               onChange={(e) => handleCategoryChange(e.target.value)}
-              className="px-2 py-0.5 rounded-lg bg-slate-800 border border-slate-700 text-sm text-slate-300 focus:outline-none focus:border-cyan-500"
+              className="px-2 py-1 border-2 border-[#1C1C1C] bg-[#F0EDE6] text-[11px] font-black uppercase tracking-wider text-[#1C1C1C] focus:outline-none focus:border-[#E85234]"
             >
               <option value="">Uncategorized</option>
-              {CATEGORIES.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
+              {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
         </div>
 
-        {/* Thumbnail + summary row */}
-        <div className="grid md:grid-cols-3 gap-5">
+        {/* Thumbnail + summary */}
+        <div className="grid md:grid-cols-3 gap-4">
           {note.thumbnail_url && (
-            <div className="md:col-span-1 rounded-xl overflow-hidden aspect-video bg-slate-800">
-              <img
-                src={note.thumbnail_url}
-                alt={note.title}
-                className="w-full h-full object-cover"
-              />
+            <div className="md:col-span-1 border-2 border-[#1C1C1C] overflow-hidden aspect-video">
+              <img src={note.thumbnail_url} alt={note.title} className="w-full h-full object-cover" />
             </div>
           )}
-          <div className={note.thumbnail_url ? "md:col-span-2" : "md:col-span-3"}>
-            {note.summary && (
-              <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-5 h-full">
-                <h2 className="text-xs font-semibold text-cyan-400 uppercase tracking-wider mb-2">
-                  Summary
-                </h2>
-                <p className="text-slate-300 leading-relaxed">{note.summary}</p>
-              </div>
-            )}
-          </div>
+          {note.summary && (
+            <div className={`${note.thumbnail_url ? "md:col-span-2" : "md:col-span-3"} border-2 border-[#1C1C1C] bg-[#E8E4DC] p-5`}>
+              <p className="text-[10px] font-black uppercase tracking-widest text-[#E85234] mb-2">Summary</p>
+              <p className="text-[#1C1C1C] leading-relaxed text-sm">{note.summary}</p>
+            </div>
+          )}
         </div>
 
         {/* Key points */}
         {note.key_points?.length > 0 && (
-          <Section title="Key Points">
-            <ul className="space-y-2">
+          <Section title={`Key Points (${note.key_points.length})`}>
+            <ul className="space-y-2.5">
               {note.key_points.map((point, i) => (
-                <li key={i} className="flex gap-3 text-sm text-slate-300">
-                  <span className="shrink-0 text-cyan-400 font-bold">{i + 1}.</span>
+                <li key={i} className="flex gap-3 text-sm text-[#1C1C1C]">
+                  <span className="shrink-0 font-black text-[#E85234]">{String(i + 1).padStart(2, "0")}.</span>
                   {point}
                 </li>
               ))}
@@ -279,14 +260,12 @@ export default function NoteDetailPage({ noteId, user }: Props) {
             <div className="space-y-3">
               {note.important_moments.map((moment, i) => (
                 <div key={i} className="flex gap-3">
-                  <span className="shrink-0 text-xs font-mono text-cyan-400 bg-cyan-400/10 px-2 py-1 rounded h-fit">
+                  <span className="shrink-0 text-[10px] font-black bg-[#E85234] text-white px-2 py-1 h-fit tracking-wider">
                     {moment.timestamp}
                   </span>
                   <div>
-                    <p className="text-sm text-white font-medium">{moment.description}</p>
-                    {moment.reason && (
-                      <p className="text-xs text-slate-500 mt-0.5">{moment.reason}</p>
-                    )}
+                    <p className="text-sm font-bold text-[#1C1C1C]">{moment.description}</p>
+                    {moment.reason && <p className="text-xs text-[#6B6560] mt-0.5">{moment.reason}</p>}
                   </div>
                 </div>
               ))}
@@ -294,8 +273,8 @@ export default function NoteDetailPage({ noteId, user }: Props) {
           </Section>
         )}
 
-        {/* Key Frames */}
-        <Section title={`Key Frames (${frames.length})`} defaultOpen={true}>
+        {/* Key frames */}
+        <Section title={`Key Frames (${frames.length})`}>
           <KeyFrameGallery frames={frames} />
         </Section>
 
@@ -306,25 +285,15 @@ export default function NoteDetailPage({ noteId, user }: Props) {
 
         {/* Tags */}
         <Section title="Tags">
-          {token && (
-            <TagEditor
-              noteId={noteId}
-              token={token}
-              tags={tags}
-              onChanged={loadNote}
-            />
-          )}
+          {token && <TagEditor noteId={noteId} token={token} tags={tags} onChanged={loadNote} />}
         </Section>
 
         {/* Visible text */}
         {note.visible_text?.length > 0 && (
-          <Section title="Text Seen in Video" defaultOpen={false}>
+          <Section title="Text Seen In Video" defaultOpen={false}>
             <div className="flex flex-wrap gap-2">
               {note.visible_text.map((text, i) => (
-                <span
-                  key={i}
-                  className="px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700 text-sm font-mono text-slate-300"
-                >
+                <span key={i} className="px-2.5 py-1 border-2 border-[#1C1C1C] text-sm font-mono text-[#1C1C1C]">
                   {text}
                 </span>
               ))}
@@ -335,23 +304,21 @@ export default function NoteDetailPage({ noteId, user }: Props) {
         {/* Related resources */}
         {note.resources?.length > 0 && (
           <Section title="Related Resources">
-            <div className="space-y-3">
+            <div className="space-y-2">
               {note.resources.map((res, i) => (
                 <a
                   key={i}
                   href={res.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-start gap-3 p-3 rounded-lg bg-slate-800/50 border border-slate-700/50 hover:border-cyan-500/50 transition group"
+                  className="flex items-start gap-3 p-3 border-2 border-[#1C1C1C] bg-[#E8E4DC] hover:bg-[#E0DCD4] hover:shadow-[3px_3px_0px_#1C1C1C] hover:-translate-x-[2px] hover:-translate-y-[2px] transition-all group"
                 >
-                  <ExternalLink className="h-4 w-4 text-cyan-400 shrink-0 mt-0.5" />
+                  <ExternalLink className="h-4 w-4 text-[#E85234] shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-sm font-medium text-white group-hover:text-cyan-400 transition">
+                    <p className="text-sm font-bold text-[#1C1C1C] group-hover:text-[#E85234] transition-colors">
                       {res.title}
                     </p>
-                    {res.reason && (
-                      <p className="text-xs text-slate-500 mt-0.5">{res.reason}</p>
-                    )}
+                    {res.reason && <p className="text-xs text-[#6B6560] mt-0.5">{res.reason}</p>}
                   </div>
                 </a>
               ))}
@@ -362,10 +329,10 @@ export default function NoteDetailPage({ noteId, user }: Props) {
         {/* Review questions */}
         {note.review_questions?.length > 0 && (
           <Section title="Review Questions" defaultOpen={false}>
-            <ol className="space-y-2">
+            <ol className="space-y-2.5">
               {note.review_questions.map((q, i) => (
-                <li key={i} className="text-sm text-slate-300 flex gap-3">
-                  <span className="shrink-0 font-bold text-cyan-400">{i + 1}.</span>
+                <li key={i} className="text-sm text-[#1C1C1C] flex gap-3">
+                  <span className="shrink-0 font-black text-[#E85234]">{String(i + 1).padStart(2, "0")}.</span>
                   {q}
                 </li>
               ))}
@@ -373,10 +340,11 @@ export default function NoteDetailPage({ noteId, user }: Props) {
           </Section>
         )}
 
-        {/* Processing error */}
+        {/* Error */}
         {note.status === "failed" && note.error_message && (
-          <div className="p-4 rounded-xl bg-red-400/10 border border-red-400/20 text-red-400 text-sm">
-            <strong>Processing error:</strong> {note.error_message}
+          <div className="p-4 border-2 border-red-600 bg-red-50 text-red-700 text-sm">
+            <strong className="font-black uppercase tracking-wider">Processing Error: </strong>
+            {note.error_message}
           </div>
         )}
       </main>

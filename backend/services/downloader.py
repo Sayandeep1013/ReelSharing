@@ -43,6 +43,12 @@ def _download_sync(url: str, output_dir: str) -> tuple[str, dict]:
         "no_warnings": True,
         "noplaylist": True,
         "match_filter": yt_dlp.utils.match_filter_func("duration <= 180"),
+        "extractor_args": {
+            "youtube": {
+                # tv_embedded and android clients bypass YouTube's bot detection on server IPs
+                "player_client": ["tv_embedded", "android"],
+            }
+        },
     }
 
     try:

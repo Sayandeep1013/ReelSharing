@@ -19,7 +19,6 @@ Transcript alone misses information that only appears on screen (recipe steps, o
 
 ![Landing page](screenshots/readme/01-landing.png)
 
-![Feature overview](screenshots/readme/02-features.png)
 
 Notes in the vault, showing AI-assigned category, tags, and summary:
 
